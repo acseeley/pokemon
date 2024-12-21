@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Team Utility</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: row;
+            width: 80%;
+            margin-top: 20px;
+        }
+
+        #team-setup, #customization {
+            flex: 1;
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        #results {
+            width: 80%;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .pokemon-slot {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pokemon-types, .pokemon-moves {
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        label {
+            display: inline-block;
+            width: 120px;
+        }
+
+        select, input {
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" style="display: flex; flex-direction: row;">
+        <!-- Left Panel: Pokemon Selection -->
+        <div id="team-setup" style="flex: 1; padding: 10px;">
+            <h2>Team Setup</h2>
+            <div id="pokemon-slots">
+                <!-- Slots for up to 6 Pokemon -->
+            </div>
+            <button id="add-pokemon">Add Pokemon</button>
+        </div>
+
+        <!-- Right Panel: Customization -->
+        <div id="customization" style="flex: 1; padding: 10px;">
+            <h2>Customization</h2>
+            <label for="resist-score">Resist Score: </label>
+            <input type="number" id="resist-score" value="1"><br>
+
+            <label for="double-resist-score">Double Resist Score: </label>
+            <input type="number" id="double-resist-score" value="1.5"><br>
+
+            <label for="effective-move-score">Effective Move Score: </label>
+            <input type="number" id="effective-move-score" value="1"><br>
+
+            <label for="extra-move-score">Extra Effective Move Score: </label>
+            <input type="number" id="extra-move-score" value="0.5"><br>
+
+            <label for="weakness-penalty">Weakness Penalty: </label>
+            <input type="number" id="weakness-penalty" value="-1.5"><br>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results" style="margin-top: 20px; padding: 10px;">
+        <h2>Results</h2>
+        <button id="calculate">Calculate</button>
+        <div id="results-container"></div>
+    </div>
+
+    <script>
+        // JavaScript Logic
+
+        let typesData = null; // Placeholder for types.json data
+        
+        async function loadTypes() {
+            try {
+                const response = await fetch('types.json');
+                const data = await response.json();
+                typesData = data.types;
+                enableAddPokemonButton();
+            } catch (error) {
+                console.error('Error loading types.json:', error);
+            }
+        }
+
+        function enableAddPokemonButton() {
+            addPokemonButton.disabled = false;
+            addPokemonButton.textContent = 'Add Pokemon';
+        }
+
+        // Initialize team slots
+        const teamSlots = document.getElementById('pokemon-slots');
+        const addPokemonButton = document.getElementById('add-pokemon');
+        addPokemonButton.disabled = true;
+        addPokemonButton.textContent = 'Loading Types...';
+
+        function createPokemonSlot(index) {
+            const slot = document.createElement('div');
+            slot.className = 'pokemon-slot';
+
+            const typesDiv = document.createElement('div');
+            typesDiv.className = 'pokemon-types';
+            typesDiv.innerHTML = `
+                <h3>Pokemon ${index + 1}</h3>
+                <label>Primary Type: </label>
+                <select class="primary-type">
+                    <option value="">None</option>
+                </select><br>
+                <label>Secondary Type: </label>
+                <select class="secondary-type">
+                    <option value="">None</option>
+                </select><br>
+            `;
+
+            const movesDiv = document.createElement('div');
+            movesDiv.className = 'pokemon-moves';
+            movesDiv.innerHTML = `
+                <label>Attack 1 Type: </label>
+                <select class="attack-type">
+                    <option value="">None</option>
+                </select><br>
+                <label>Attack 2 Type: </label>
+                <select class="attack-type">
+                    <option value="">None</option>
+                </select><br>
+                <label>Attack 3 Type: </label>
+                <select class="attack-type">
+                    <option value="">None</option>
+                </select><br>
+                <label>Attack 4 Type: </label>
+                <select class="attack-type">
+                    <option value="">None</option>
+                </select><br>
+            `;
+
+            slot.appendChild(typesDiv);
+            slot.appendChild(movesDiv);
+            return slot;
+        }
+
+        function populateTypeOptions(selectElement) {
+            if (!typesData) return;
+            for (const type in typesData) {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                selectElement.appendChild(option);
+            }
+        }
+
+        let pokemonCount = 0;
+        addPokemonButton.addEventListener('click', () => {
+            if (pokemonCount < 6) {
+                const slot = createPokemonSlot(pokemonCount);
+                teamSlots.appendChild(slot);
+                const typeSelectors = slot.querySelectorAll('select');
+                typeSelectors.forEach(select => populateTypeOptions(select));
+                pokemonCount++;
+            } else {
+                alert('You can only add up to 6 Pokemon.');
+            }
+        });
+
+        const calculateButton = document.getElementById('calculate');
+        calculateButton.addEventListener('click', () => {
+            // Calculate logic goes here
+            alert('Calculation logic will be implemented soon!');
+        });
+
+        loadTypes();
+    </script>
+</body>
+</html>
