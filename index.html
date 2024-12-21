@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Team Builder</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Pokémon Team Builder</h1>
+
+    <div id="app">
+        <form id="team-form">
+            <h2>Add Pokémon to Your Team</h2>
+            <div id="team-inputs">
+                <div class="pokemon-entry">
+                    <label>Pokémon Type(s):</label>
+                    <input type="text" name="pokemon-type" placeholder="Type 1, Type 2">
+                    <label>Move Type(s):</label>
+                    <input type="text" name="move-type" placeholder="Move 1, Move 2, Move 3, Move 4">
+                </div>
+            </div>
+            <button type="button" id="add-pokemon">Add Another Pokémon</button>
+            <button type="submit" id="submit-team">Calculate Team Scores</button>
+        </form>
+
+        <div id="results">
+            <h2>Results</h2>
+            <div id="scores"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
