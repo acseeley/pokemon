@@ -8,7 +8,7 @@ async function getTypeData(type) {
     return data.damage_relations;
 }
 
-// Calculate scores for a single Pok�mon
+// Calculate scores for a single Pokémon
 async function calculateScores(pokemonTypes, moveTypes) {
     const allTypes = ["normal", "fire", "water", "electric", "grass", "ice", "fighting", "poison", "ground", "flying", "psychic", "bug", "rock", "ghost", "dragon", "dark", "steel", "fairy"];
     const scores = {};
@@ -46,28 +46,43 @@ async function calculateScores(pokemonTypes, moveTypes) {
     return scores;
 }
 
-// Determine bonus points for the highest scorer(s)
+// Determine bonus points for the highest and second-highest scorer(s)
 function applyBonus(allScores) {
     const allTypes = Object.keys(allScores[0]);
 
     for (const targetType of allTypes) {
         let maxScore = 0;
+        let secondMaxScore = 0;
         let highestScorers = [];
+        let secondHighestScorers = [];
 
-        // Find the highest score and corresponding Pok�mon
+        // Find the highest and second-highest scores
         for (const [index, pokemonScores] of allScores.entries()) {
-            if (pokemonScores[targetType] > maxScore) {
-                maxScore = pokemonScores[targetType];
+            const score = pokemonScores[targetType] || 0;
+            if (score > maxScore) {
+                secondMaxScore = maxScore;
+                secondHighestScorers = [...highestScorers];
+                maxScore = score;
                 highestScorers = [index];
-            } else if (pokemonScores[targetType] === maxScore) {
+            } else if (score === maxScore) {
                 highestScorers.push(index);
+            } else if (score > secondMaxScore) {
+                secondMaxScore = score;
+                secondHighestScorers = [index];
+            } else if (score === secondMaxScore) {
+                secondHighestScorers.push(index);
             }
         }
 
         // Apply bonus points
-        const bonus = highestScorers.length === 1 ? 1 : 0.75;
+        const highestBonus = highestScorers.length === 1 ? 1 : 0.75;
         for (const scorer of highestScorers) {
-            allScores[scorer][targetType] += bonus;
+            allScores[scorer].overall = (allScores[scorer].overall || 0) + highestBonus;
+        }
+
+        const secondHighestBonus = 0.5;
+        for (const scorer of secondHighestScorers) {
+            allScores[scorer].overall = (allScores[scorer].overall || 0) + secondHighestBonus;
         }
     }
 }
@@ -77,8 +92,11 @@ async function calculateTeamScores(team) {
     const allScores = [];
 
     for (const pokemon of team) {
+        if (!pokemon.types || pokemon.types.length === 0) continue; // Skip if no types provided
+
         const { types, moves } = pokemon;
         const scores = await calculateScores(types, moves);
+        scores.overall = 0; // Initialize overall score
         allScores.push(scores);
     }
 
@@ -86,14 +104,19 @@ async function calculateTeamScores(team) {
     return allScores;
 }
 
-// Example team input
+// Example team input with potential for all 6 Pokémon
 const team = [
     { types: ["grass"], moves: ["grass", "normal"] },
     { types: ["fire", "flying"], moves: ["fire", "flying"] },
-    { types: ["water"], moves: ["water", "ice"] }
+    { types: ["water"], moves: ["water", "ice"] },
+    {}, // Empty Pokémon slot
+    {}, // Empty Pokémon slot
+    {}  // Empty Pokémon slot
 ];
 
 // Run the calculation
 calculateTeamScores(team).then(scores => {
     console.log(scores);
 });
+
+
